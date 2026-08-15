@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MOVA – AI Movement Coach</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--border:#1e2d45;
+  --accent:#00d4ff;--accent2:#7c3aed;--green:#22c55e;--red:#ef4444;
+  --yellow:#eab308;--text:#f1f5f9;--muted:#94a3b8;--r:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",system-ui,sans-serif;min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;flex-shrink:0;}
+.logo{font-size:1.35rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer;}
+.nav-links{display:flex;gap:2px;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.84rem;padding:7px 12px;border-radius:6px;display:block;cursor:pointer;}
+.nav-links a:hover{color:var(--text);}
+.nav-right{display:flex;gap:10px;align-items:center;}
+#nav-username{font-size:.82rem;color:var(--muted);}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-size:.88rem;font-weight:600;transition:all .2s;text-decoration:none;line-height:1;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#0099cc);color:#000;}
+.btn-primary:hover{opacity:.85;transform:translateY(-1px);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-sm{padding:6px 14px;font-size:.8rem;}
+.btn-lg{padding:13px 32px;font-size:.98rem;border-radius:10px;}
+/* HERO */
+.hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:56px 24px 36px;}
+.badge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.25);border-radius:999px;padding:5px 16px;font-size:.78rem;color:var(--accent);margin-bottom:24px;font-weight:600;}
+.badge::before{content:'';width:6px;height:6px;background:var(--accent);border-radius:50%;animation:bl 2s infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.25}}
+.hero h1{font-size:clamp(2.2rem,5.5vw,4rem);font-weight:900;line-height:1.1;margin-bottom:18px;letter-spacing:-1.5px;}
+.hero h1 .hi{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{font-size:1.05rem;color:var(--muted);max-width:520px;line-height:1.75;margin-bottom:36px;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:52px;}
+.feat-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;padding:0 36px 56px;max-width:1060px;margin:0 auto;width:100%;}
+.fc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;transition:border-color .2s;}
+.fc:hover{border-color:var(--accent);}
+.fc .fi{font-size:1.6rem;margin-bottom:9px;}
+.fc h3{font-size:.9rem;font-weight:700;margin-bottom:5px;}
+.fc p{font-size:.8rem;color:var(--muted);line-height:1.6;}
+/* AUTH MODALS */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:420px;position:relative;}
+.modal h2{font-size:1.4rem;font-weight:800;margin-bottom:6px;}
+.modal .sub{color:var(--muted);font-size:.85rem;margin-bottom:24px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.form-group input, .form-group select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:.9rem;outline:none;transition:border-color .2s;}
+.form-group input:focus, .form-group select:focus{border-color:var(--accent);}
+.form-error{color:var(--red);font-size:.78rem;margin-top:5px;display:none;}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;}
+.modal-footer{text-align:center;margin-top:16px;font-size:.82rem;color:var(--muted);}
+.modal-footer a{color:var(--accent);cursor:pointer;text-decoration:none;}
+.msg-bar{padding:10px 14px;border-radius:8px;font-size:.85rem;margin-bottom:16px;display:none;}
+.msg-bar.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+.msg-bar.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);}
+/* SAFETY */
+.ctr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;max-width:660px;margin:0 auto;width:100%;}
+.sfhdr{text-align:center;margin-bottom:28px;}
+.sfhdr .si{font-size:2.8rem;margin-bottom:10px;}
+.sfhdr h2{font-size:1.75rem;font-weight:800;margin-bottom:10px;}
+.sfhdr p{color:var(--muted);line-height:1.7;font-size:.9rem;}
+.sc-list{display:flex;flex-direction:column;gap:12px;width:100%;margin-bottom:24px;}
+.sc{display:flex;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.sc.warn{border-color:rgba(234,179,8,.4);background:rgba(234,179,8,.04);}
+.sc.info{border-color:rgba(0,212,255,.25);background:rgba(0,212,255,.04);}
+.sc .si2{font-size:1.3rem;flex-shrink:0;}
+.sc h4{font-size:.86rem;font-weight:700;margin-bottom:4px;}
+.sc p{font-size:.8rem;color:var(--muted);line-height:1.55;}
+.cbrow{display:flex;align-items:flex-start;gap:11px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:18px;cursor:pointer;width:100%;}
+.cbrow input{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;margin-top:2px;cursor:pointer;}
+.cbrow span{font-size:.84rem;line-height:1.6;color:var(--muted);}
+/* EXERCISE SELECT */
+.exwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:840px;margin:0 auto;width:100%;}
+.exwrap h2{font-size:1.65rem;font-weight:800;margin-bottom:7px;}
+.exwrap .sub{color:var(--muted);margin-bottom:32px;font-size:.9rem;}
+.exgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;width:100%;margin-bottom:28px;}
+.exc{background:var(--surface);border:2px solid var(--border);border-radius:var(--r);padding:26px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.exc:hover:not(.locked){border-color:var(--accent);transform:translateY(-2px);}
+.exc.sel{border-color:var(--accent);background:rgba(0,212,255,.06);}
+.exc.locked{opacity:.38;cursor:not-allowed;}
+.exc .exi{font-size:2.4rem;margin-bottom:9px;}
+.exc .exn{font-size:.95rem;font-weight:700;margin-bottom:4px;}
+.exc .exd{font-size:.76rem;color:var(--muted);}
+.exbadge{position:absolute;top:7px;right:7px;font-size:.64rem;padding:2px 7px;border-radius:999px;}
+.exbadge.live{background:rgba(34,197,94,.14);color:var(--green);border:1px solid rgba(34,197,94,.25);}
+.exbadge.soon{background:var(--surface2);color:var(--muted);}
+/* SESSION */
+#screen-session{min-height:100vh;}
+.sbody{display:grid;grid-template-columns:1fr 310px;min-height:calc(100vh - 60px);}
+.camarea{position:relative;background:#000;overflow:hidden;}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+#canvas{position:absolute;inset:0;width:100%;height:100%;}
+.ovtl{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;z-index:10;pointer-events:none;gap:8px;}
+.ovbl{position:absolute;bottom:12px;left:12px;right:12px;z-index:10;}
+.spill{display:inline-flex;align-items:center;gap:7px;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:6px 13px;font-size:.78rem;font-weight:600;}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sdot.g{background:var(--green);box-shadow:0 0 7px var(--green);}
+.sdot.r{background:var(--red);box-shadow:0 0 7px var(--red);}
+.sdot.y{background:var(--yellow);box-shadow:0 0 7px var(--yellow);}
+.sdot.grey{background:var(--muted);}
+.repbox{background:rgba(0,0,0,.78);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.09);border-radius:var(--r);padding:9px 16px;text-align:center;}
+.repbox .rn{font-size:3rem;font-weight:900;line-height:1;color:var(--accent);}
+.repbox .rl{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
+.fbbar{background:rgba(0,0,0,.8);backdrop-filter:blur(8px);border-radius:8px;padding:10px 15px;font-size:.84rem;line-height:1.5;border-left:3px solid var(--accent);transition:border-color .3s;}
+.fbbar.good{border-color:var(--green);}
+.fbbar.warn{border-color:var(--yellow);}
+.fbbar.err{border-color:var(--red);}
+.noperson{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:7px;padding:8px 16px;font-size:.8rem;color:var(--yellow);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .4s;z-index:15;}
+.noperson.show{opacity:1;}
+.permerr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:28px;z-index:20;background:#000;}
+.permerr h3{font-size:1rem;font-weight:700;}
+.permerr p{font-size:.82rem;color:var(--muted);max-width:320px;line-height:1.6;}
+/* SIDEBAR */
+.ssbr{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.sbsec{padding:16px;border-bottom:1px solid var(--border);}
+.sbsec:last-child{border-bottom:none;}
+.sbsec h3{font-size:.68rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin-bottom:11px;font-weight:700;}
+.srow{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.sl{font-size:.8rem;color:var(--muted);}
+.sv{font-size:.88rem;font-weight:700;}
+.sv.g{color:var(--green);}
+.sv.y{color:var(--yellow);}
+.sv.r{color:var(--red);}
+.phrow{display:flex;align-items:center;gap:9px;background:var(--surface2);border-radius:7px;padding:9px 11px;margin-bottom:7px;}
+.pdot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:all .3s;}
+.pdot.active{background:var(--accent);box-shadow:0 0 8px var(--accent);}
+.abr{margin-bottom:9px;}
+.ablbl{display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:3px;}
+.abtrack{background:var(--surface2);border-radius:999px;height:5px;overflow:hidden;}
+.abfill{height:100%;border-radius:999px;background:var(--accent);transition:width .3s;}
+.abfill.g{background:var(--green);}
+.abfill.y{background:var(--yellow);}
+.abfill.r{background:var(--red);}
+.tl{display:flex;flex-direction:column;gap:4px;max-height:140px;overflow-y:auto;}
+.tli{display:flex;align-items:flex-start;gap:6px;font-size:.74rem;padding:4px 6px;background:var(--surface2);border-radius:4px;line-height:1.4;}
+.sbbtns{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+/* LOADING */
+#loverlay{position:fixed;inset:0;background:rgba(10,14,26,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+#loverlay.hide{display:none;}
+.spin{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.ldt{font-size:.92rem;color:var(--muted);}
+.lds{font-size:.78rem;color:var(--muted);opacity:.6;}
+/* RESULTS */
+.rwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:760px;margin:0 auto;width:100%;}
+.rwrap h2{font-size:1.8rem;font-weight:800;margin-bottom:5px;}
+.rwrap .sub{color:var(--muted);margin-bottom:32px;}
+.rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:13px;width:100%;margin-bottom:22px;}
+.rstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;}
+.rstat .rv{font-size:2.1rem;font-weight:900;color:var(--accent);line-height:1;}
+.rstat .rsl{font-size:.72rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.rfb{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;width:100%;margin-bottom:18px;}
+.rfb h3{font-size:.9rem;font-weight:700;margin-bottom:11px;}
+.fbi{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:.82rem;line-height:1.6;color:var(--muted);}
+.fbi:last-child{margin-bottom:0;}
+.ring-w{display:flex;flex-direction:column;align-items:center;margin-bottom:24px;}
+.ring-w .rl{font-size:.8rem;color:var(--muted);margin-top:6px;}
+.resacts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+/* PROGRESS */
+.pgwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:840px;margin:0 auto;width:100%;}
+.pgwrap h2{font-size:1.65rem;font-weight:800;margin-bottom:7px;}
+.pgwrap .sub{color:var(--muted);margin-bottom:32px;}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px;width:100%;margin-bottom:22px;}
+.ps{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center;}
+.ps .pv{font-size:1.9rem;font-weight:900;color:var(--accent);line-height:1;}
+.ps .pl{font-size:.72rem;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.htable{width:100%;border-collapse:collapse;margin-bottom:20px;}
+.htable th{font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:9px 11px;border-bottom:1px solid var(--border);}
+.htable td{font-size:.82rem;padding:10px 11px;border-bottom:1px solid rgba(30,45,69,.45);}
+.htable tr:last-child td{border-bottom:none;}
+.sb2{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:700;}
+.sb2.g{background:rgba(34,197,94,.13);color:var(--green);}
+.sb2.y{background:rgba(234,179,8,.13);color:var(--yellow);}
+.sb2.r{background:rgba(239,68,68,.13);color:var(--red);}
+.empty-s{text-align:center;padding:44px;color:var(--muted);}
+.empty-s .ei{font-size:2.2rem;margin-bottom:12px;}
+/* PROFILE */
+.profwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:580px;margin:0 auto;width:100%;}
+.profwrap h2{font-size:1.65rem;font-weight:800;margin-bottom:28px;}
+.prof-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;width:100%;margin-bottom:18px;}
+.prof-card h3{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:16px;font-weight:700;}
+/* HOW */
+.hwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:820px;margin:0 auto;width:100%;}
+.hwrap h2{font-size:1.8rem;font-weight:800;margin-bottom:7px;text-align:center;}
+.hwrap .sub{color:var(--muted);margin-bottom:36px;text-align:center;}
+.hsteps{display:flex;flex-direction:column;width:100%;margin-bottom:36px;}
+.hs{display:flex;gap:20px;padding:20px 0;}
+.hs:not(:last-child){border-bottom:1px solid var(--border);}
+.hsn{width:40px;height:40px;border-radius:50%;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.22);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:800;color:var(--accent);flex-shrink:0;}
+.hsb h3{font-size:.9rem;font-weight:700;margin-bottom:6px;}
+.hsb p{font-size:.8rem;color:var(--muted);line-height:1.7;}
+.tstack{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;width:100%;}
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
+.tc h4{font-size:.82rem;font-weight:700;margin-bottom:4px;color:var(--accent);}
+.tc p{font-size:.76rem;color:var(--muted);line-height:1.6;}
+/* RESPONSIBLE */
+.rspwrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:44px 24px;max-width:720px;margin:0 auto;width:100%;}
+.rspwrap h2{font-size:1.8rem;font-weight:800;margin-bottom:7px;text-align:center;}
+.rspwrap .sub{color:var(--muted);margin-bottom:36px;text-align:center;}
+.prin-list{display:flex;flex-direction:column;gap:12px;width:100%;margin-bottom:24px;}
+.prin{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;}
+.prin h3{font-size:.86rem;font-weight:700;margin-bottom:6px;}
+.prin p{font-size:.8rem;color:var(--muted);line-height:1.7;}
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:24px 28px;text-align:center;}
+footer .fl{font-size:1.1rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+footer p{font-size:.74rem;color:var(--muted);margin-top:5px;opacity:.65;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:.85rem;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;max-width:300px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{border-color:rgba(34,197,94,.4);}
+.toast.err{border-color:rgba(239,68,68,.4);}
+@media(max-width:800px){
+  .sbody{grid-template-columns:1fr;grid-template-rows:60vh auto;}
+  .ssbr{max-height:280px;}
+  nav .nav-links{display:none;}
+  .hero h1{font-size:2rem;}
+  .feat-strip{padding:0 18px 40px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loverlay" class="hide">
+  <div class="spin"></div>
+  <div class="ldt" id="lmsg">Loading AI Model…</div>
+  <div class="lds" id="lsub">Downloading MediaPipe Pose via CDN</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="show('landing')">MOVA</div>
+  <ul class="nav-links">
+    <li><a onclick="show('how')">How It Works</a></li>
+    <li><a onclick="show('progress')">Progress</a></li>
+    <li><a onclick="show('responsible')">Safety & AI</a></li>
+  </ul>
+  <div class="nav-right">
+    <span id="nav-username"></span>
+    <button class="btn btn-outline btn-sm" id="nav-login-btn" onclick="openModal('login')">Login</button>
+    <button class="btn btn-primary btn-sm" id="nav-register-btn" onclick="openModal('register')">Register</button>
+    <button class="btn btn-outline btn-sm" id="nav-logout-btn" style="display:none" onclick="logout()">Logout</button>
+    <button class="btn btn-outline btn-sm" id="nav-profile-btn" style="display:none" onclick="show('profile')">Profile</button>
+  </div>
+</nav>
+
+<!-- ═ LANDING ══════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="hero">
+    <div class="badge">Real-time AI Pose Detection</div>
+    <h1>Every body moves<br><span class="hi">differently. MOVA adapts.</span></h1>
+    <p>An adaptive AI movement coach that uses your camera to detect your body in real time, draw a live skeleton, track your squats and save every session to a real database.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary btn-lg" onclick="show('safety')">▶ Start MOVA</button>
+      <button class="btn btn-outline btn-lg" onclick="show('how')">How It Works</button>
+    </div>
+  </div>
+  <div class="feat-strip">
+    <div class="fc"><div class="fi">🦴</div><h3>Live Skeleton</h3><p>Real-time 33-point MediaPipe Pose tracking. Skeleton follows your actual body through the camera.</p></div>
+    <div class="fc"><div class="fi">🟢</div><h3>Color-Coded Joints</h3><p>Green = good · Red = deviation · Yellow = low confidence. Updated every frame.</p></div>
+    <div class="fc"><div class="fi">🔢</div><h3>Rep Counter</h3><p>Automatic squat rep counting with phase detection: Stand → Descend → Bottom → Ascend.</p></div>
+    <div class="fc"><div class="fi">💾</div><h3>Database Backed</h3><p>Every session saved to a real SQLite database via REST API. Track your history over time.</p></div>
+    <div class="fc"><div class="fi">🔐</div><h3>User Accounts</h3><p>Register, login and get a personal history. JWT auth, bcrypt passwords.</p></div>
+    <div class="fc"><div class="fi">🛡️</div><h3>Safety-First AI</h3><p>Never diagnoses injuries. Movement analysis only — not medical advice.</p></div>
+  </div>
+  <footer><div class="fl">MOVA</div><p>Adaptive AI Movement Coach · MediaPipe Pose · Node.js + SQLite · Made with IBM Bob</p></footer>
+</div>
+
+<!-- ═ SAFETY ════════════════════════════════════ -->
+<div id="screen-safety" class="screen">
+  <div class="ctr">
+    <div class="sfhdr"><div class="si">🛡️</div><h2>Before We Start</h2><p>MOVA is a movement-analysis assistant only. Please read the following before continuing.</p></div>
+    <div class="sc-list">
+      <div class="sc warn"><div class="si2">⚠️</div><div><h4>Not a Medical Tool</h4><p>MOVA does not diagnose injuries or medical conditions. If you have pain or existing injuries, consult a healthcare professional before exercising.</p></div></div>
+      <div class="sc warn"><div class="si2">🚫</div><div><h4>MOVA Will Not Push You Beyond Your Limits</h4><p>People have different mobility, flexibility and limitations. MOVA will never instruct you to push through pain. Stop immediately if you feel discomfort.</p></div></div>
+      <div class="sc info"><div class="si2">🟡</div><div><h4>Low Confidence = No Feedback</h4><p>If MOVA cannot reliably detect your movement it shows: "I can't reliably assess this movement. Please reposition yourself."</p></div></div>
+      <div class="sc info"><div class="si2">📷</div><div><h4>Camera Privacy</h4><p>Your camera is processed locally in your browser via WebAssembly. No video is ever uploaded to any server.</p></div></div>
+    </div>
+    <label class="cbrow">
+      <input type="checkbox" id="safety-cb" onchange="document.getElementById('btn-go').disabled=!this.checked"/>
+      <span>I understand MOVA is a movement-analysis tool, not a medical device. I will stop if I feel pain or discomfort.</span>
+    </label>
+    <button class="btn btn-primary btn-lg" id="btn-go" disabled onclick="show('exercise')" style="width:100%">I Understand — Choose Exercise</button>
+  </div>
+</div>
+
+<!-- ═ EXERCISE ═══════════════════════════════════ -->
+<div id="screen-exercise" class="screen">
+  <div class="exwrap">
+    <h2>Choose Your Exercise</h2>
+    <p class="sub">Select the movement to practice. MOVA will guide you with live skeleton tracking and feedback.</p>
+    <div class="exgrid">
+      <div class="exc sel" id="ex-squat" onclick="selectEx('squat',this)">
+        <span class="exbadge live">✓ LIVE</span>
+        <div class="exi">🏋️</div><div class="exn">Squat</div>
+        <div class="exd">Live rep counting, knee/hip/torso analysis, phase detection.</div>
+      </div>
+      <div class="exc locked"><span class="exbadge soon">Soon</span><div class="exi">🧘</div><div class="exn">Lunge</div><div class="exd">Single-leg balance and knee tracking.</div></div>
+      <div class="exc locked"><span class="exbadge soon">Soon</span><div class="exi">💪</div><div class="exn">Push-Up</div><div class="exd">Upper body and elbow alignment.</div></div>
+      <div class="exc locked"><span class="exbadge soon">Soon</span><div class="exi">🚶</div><div class="exn">Deadlift</div><div class="exd">Hip hinge and spine neutrality.</div></div>
+      <div class="exc locked"><span class="exbadge soon">Soon</span><div class="exi">🙆</div><div class="exn">Shoulder Press</div><div class="exd">Overhead and spinal alignment.</div></div>
+      <div class="exc locked"><span class="exbadge soon">Soon</span><div class="exi">🏃</div><div class="exn">Running Gait</div><div class="exd">Stride and posture analysis.</div></div>
+    </div>
+    <button class="btn btn-primary btn-lg" id="btn-startsession" onclick="startSession()">▶ Start Squat Session</button>
+  </div>
+</div>
+
+<!-- ═ SESSION ════════════════════════════════════ -->
+<div id="screen-session" class="screen">
+  <div class="sbody">
+    <div class="camarea">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="canvas"></canvas>
+      <div class="ovtl">
+        <div class="spill"><div class="sdot grey" id="det-dot"></div><span id="det-txt">Initializing…</span></div>
+        <div class="spill"><div class="sdot grey" id="conf-dot"></div><span id="conf-txt">Confidence: —</span></div>
+      </div>
+      <div style="position:absolute;top:12px;right:12px;z-index:11;">
+        <div class="repbox"><div class="rn" id="rep-counter">0</div><div class="rl">Reps</div></div>
+      </div>
+      <div class="ovbl"><div class="fbbar" id="fbbar">Waiting for pose detection…</div></div>
+      <div class="noperson" id="noperson">I can't reliably assess this movement. Please reposition yourself.</div>
+      <div class="permerr" id="permerr" style="display:none;">
+        <div style="font-size:2.2rem;">📷</div>
+        <h3>Camera Access Required</h3>
+        <p>MOVA needs camera permission to detect your body. Please allow camera access and reload the page.</p>
+        <button class="btn btn-outline" onclick="location.reload()">Reload & Try Again</button>
+      </div>
+    </div>
+    <div class="ssbr">
+      <div class="sbsec">
+        <h3>Session</h3>
+        <div class="srow"><span class="sl">Exercise</span><span class="sv">Squat</span></div>
+        <div class="srow"><span class="sl">Duration</span><span class="sv" id="sb-dur">0:00</span></div>
+        <div class="srow"><span class="sl">Reps</span><span class="sv" id="sb-reps">0</span></div>
+        <div class="srow"><span class="sl">Form Score</span><span class="sv g" id="sb-score">—</span></div>
+      </div>
+      <div class="sbsec">
+        <h3>Movement Phase</h3>
+        <div class="phrow"><div class="pdot active" id="ph-standing"></div><span style="font-size:.8rem;">Standing / Ready</span></div>
+        <div class="phrow"><div class="pdot" id="ph-descend"></div><span style="font-size:.8rem;">Descending</span></div>
+        <div class="phrow"><div class="pdot" id="ph-bottom"></div><span style="font-size:.8rem;">Bottom Position</span></div>
+        <div class="phrow"><div class="pdot" id="ph-ascend"></div><span style="font-size:.8rem;">Ascending</span></div>
+      </div>
+      <div class="sbsec">
+        <h3>Joint Angles</h3>
+        <div class="abr"><div class="ablbl"><span>Left Knee</span><span id="ang-lk">—°</span></div><div class="abtrack"><div class="abfill" id="bar-lk" style="width:0%"></div></div></div>
+        <div class="abr"><div class="ablbl"><span>Right Knee</span><span id="ang-rk">—°</span></div><div class="abtrack"><div class="abfill" id="bar-rk" style="width:0%"></div></div></div>
+        <div class="abr"><div class="ablbl"><span>Left Hip</span><span id="ang-lh">—°</span></div><div class="abtrack"><div class="abfill" id="bar-lh" style="width:0%"></div></div></div>
+        <div class="abr"><div class="ablbl"><span>Right Hip</span><span id="ang-rh">—°</span></div><div class="abtrack"><div class="abfill" id="bar-rh" style="width:0%"></div></div></div>
+        <div class="abr"><div class="ablbl"><span>Torso Lean</span><span id="ang-torso">—°</span></div><div class="abtrack"><div class="abfill" id="bar-torso" style="width:0%"></div></div></div>
+      </div>
+      <div class="sbsec">
+        <h3>Skeleton Key</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>Within criteria</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;"><div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>Deviation detected</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.78rem;"><div style="width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0;"></div>Low confidence</div>
+        </div>
+      </div>
+      <div class="sbsec">
+        <h3>Session Log</h3>
+        <div class="tl" id="event-log"><div class="tli"><span>⏳</span><span>Waiting…</span></div></div>
+      </div>
+      <div class="sbbtns">
+        <button class="btn btn-danger" onclick="endSession()" style="width:100%">⏹ End Session</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═ RESULTS ════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="rwrap">
+    <h2>Session Complete 🎉</h2>
+    <p class="sub" id="res-sub">Here's your squat session summary.</p>
+    <div class="ring-w">
+      <svg width="106" height="106" viewBox="0 0 106 106">
+        <circle cx="53" cy="53" r="44" fill="none" stroke="var(--surface2)" stroke-width="9"/>
+        <circle id="score-ring" cx="53" cy="53" r="44" fill="none" stroke="var(--accent)" stroke-width="9"
+          stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="276"
+          transform="rotate(-90 53 53)" style="transition:stroke-dashoffset 1.2s ease;"/>
+        <text x="53" y="51" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="900" id="score-num">—</text>
+        <text x="53" y="65" text-anchor="middle" fill="var(--muted)" font-size="9">/100</text>
+      </svg>
+      <div class="rl">Form Score</div>
+    </div>
+    <div class="rg">
+      <div class="rstat"><div class="rv" id="res-reps">0</div><div class="rsl">Reps</div></div>
+      <div class="rstat"><div class="rv" id="res-dur">0:00</div><div class="rsl">Duration</div></div>
+      <div class="rstat"><div class="rv" id="res-good">0</div><div class="rsl">Good Form Reps</div></div>
+      <div class="rstat"><div class="rv" id="res-knee">—°</div><div class="rsl">Avg Knee Angle</div></div>
+    </div>
+    <div class="rfb"><h3>Movement Analysis</h3><div id="res-fblist"><div class="fbi">Complete a session to see feedback.</div></div></div>
+    <div id="save-status" style="font-size:.8rem;color:var(--muted);margin-bottom:16px;"></div>
+    <div class="resacts">
+      <button class="btn btn-primary btn-lg" onclick="show('exercise')">🔁 New Session</button>
+      <button class="btn btn-outline" onclick="show('progress')">📈 Progress</button>
+      <button class="btn btn-outline" onclick="show('landing')">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═ PROGRESS ═══════════════════════════════════ -->
+<div id="screen-progress" class="screen">
+  <div class="pgwrap">
+    <h2>Personal Progress</h2>
+    <p class="sub">Your movement history — measured against yourself.</p>
+    <div class="pgrid">
+      <div class="ps"><div class="pv" id="pg-sessions">0</div><div class="pl">Sessions</div></div>
+      <div class="ps"><div class="pv" id="pg-reps">0</div><div class="pl">Total Reps</div></div>
+      <div class="ps"><div class="pv" id="pg-avg">—</div><div class="pl">Avg Score</div></div>
+      <div class="ps"><div class="pv" id="pg-best">—</div><div class="pl">Best Score</div></div>
+      <div class="ps"><div class="pv" id="pg-mins">0</div><div class="pl">Total Minutes</div></div>
+    </div>
+    <div id="pg-content" style="width:100%">
+      <div class="empty-s" id="pg-empty"><div class="ei">📊</div><p>No sessions yet. Complete a session to see your progress.</p><div style="height:14px;"></div><button class="btn btn-primary" onclick="show('safety')">Start First Session</button></div>
+      <table class="htable" id="pg-table" style="display:none;">
+        <thead><tr><th>Date</th><th>Exercise</th><th>Reps</th><th>Duration</th><th>Score</th></tr></thead>
+        <tbody id="pg-tbody"></tbody>
+      </table>
+    </div>
+    <div id="pg-login-prompt" style="display:none;text-align:center;padding:20px;">
+      <p style="color:var(--muted);margin-bottom:14px;">Login to save and view your progress across devices.</p>
+      <button class="btn btn-primary" onclick="openModal('login')">Login / Register</button>
+    </div>
+    <div style="height:36px;"></div>
+  </div>
+</div>
+
+<!-- ═ PROFILE ════════════════════════════════════ -->
+<div id="screen-profile" class="screen">
+  <div class="profwrap">
+    <h2>Your Profile</h2>
+    <div class="prof-card">
+      <h3>Account Info</h3>
+      <div class="srow"><span class="sl">Username</span><span class="sv" id="prof-username">—</span></div>
+      <div class="srow"><span class="sl">Email</span><span class="sv" id="prof-email">—</span></div>
+      <div class="srow"><span class="sl">Member Since</span><span class="sv" id="prof-since">—</span></div>
+      <div class="srow"><span class="sl">Total Sessions</span><span class="sv" id="prof-sessions">—</span></div>
+    </div>
+    <div class="prof-card">
+      <h3>Edit Profile</h3>
+      <div class="form-group"><label>Full Name</label><input type="text" id="prof-name" placeholder="Your name"/></div>
+      <div class="form-group"><label>Age</label><input type="number" id="prof-age" min="10" max="120" placeholder="Age"/></div>
+      <div class="form-group"><label>Fitness Level</label>
+        <select id="prof-fitness"><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="saveProfile()" style="width:100%">Save Changes</button>
+    </div>
+    <div class="prof-card">
+      <h3>Change Password</h3>
+      <div class="form-group"><label>Current Password</label><input type="password" id="pw-cur" placeholder="Current password"/></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="pw-new" placeholder="New password (min 6 chars)"/></div>
+      <button class="btn btn-outline" onclick="changePassword()" style="width:100%">Change Password</button>
+    </div>
+    <button class="btn btn-outline" onclick="show('landing')">← Back</button>
+    <div style="height:36px;"></div>
+  </div>
+</div>
+
+<!-- ═ HOW IT WORKS ═══════════════════════════════ -->
+<div id="screen-how" class="screen">
+  <div class="hwrap">
+    <h2>How MOVA Works</h2>
+    <p class="sub">A full-stack AI pipeline that runs pose estimation in your browser and saves data to a real database.</p>
+    <div class="hsteps">
+      <div class="hs"><div class="hsn">1</div><div class="hsb"><h3>Camera Permission & Feed</h3><p>MOVA uses <code>getUserMedia</code> to access your camera. Live video feeds into a hidden element processed by MediaPipe Pose at ~30fps entirely on your device via WebAssembly.</p></div></div>
+      <div class="hs"><div class="hsn">2</div><div class="hsb"><h3>MediaPipe Pose Estimation</h3><p>Google's MediaPipe Pose WASM model detects 33 body landmarks per frame — head, shoulders, elbows, wrists, hips, knees, ankles and more. No data leaves your browser.</p></div></div>
+      <div class="hs"><div class="hsn">3</div><div class="hsb"><h3>Skeleton Rendering</h3><p>Landmarks are drawn on a canvas overlay. Joints are color-coded: green (good form), red (deviation), yellow (low confidence). All 33 connections rendered with gradient lines every frame.</p></div></div>
+      <div class="hs"><div class="hsn">4</div><div class="hsb"><h3>Joint Angle Calculation</h3><p>3-point vector math computes angles at knees, hips and torso every frame using the live landmark coordinates.</p></div></div>
+      <div class="hs"><div class="hsn">5</div><div class="hsb"><h3>Squat Phase State Machine</h3><p>A state machine tracks hip Y-position across frames: Standing → Descend → Bottom → Ascend. A complete cycle = 1 counted rep.</p></div></div>
+      <div class="hs"><div class="hsn">6</div><div class="hsb"><h3>REST API + SQLite Database</h3><p>When you end a session, results are POST'd to <code>/api/sessions</code> (Node.js + Express). Your data is stored in SQLite with full rep-level detail and retrieved for the progress dashboard.</p></div></div>
+      <div class="hs"><div class="hsn">7</div><div class="hsb"><h3>User Authentication</h3><p>Register with email + password (bcrypt hashed). Login returns a JWT stored in localStorage. All API calls include the Bearer token for secure, per-user data.</p></div></div>
+    </div>
+    <h3 style="align-self:flex-start;margin-bottom:14px;font-size:.95rem;">Technology Stack</h3>
+    <div class="tstack">
+      <div class="tc"><h4>MediaPipe Pose</h4><p>Google WASM pose estimation. 33 landmarks, ~30fps in-browser.</p></div>
+      <div class="tc"><h4>Node.js + Express</h4><p>REST API server. Auth, session and user routes.</p></div>
+      <div class="tc"><h4>SQLite</h4><p>Zero-config file database. Auto-created on first run.</p></div>
+      <div class="tc"><h4>JWT + bcrypt</h4><p>Secure user authentication and password hashing.</p></div>
+      <div class="tc"><h4>HTML5 Canvas</h4><p>GPU-accelerated skeleton overlay on video.</p></div>
+      <div class="tc"><h4>Vanilla JS</h4><p>No frameworks. Pure JS for everything.</p></div>
+    </div>
+    <div style="height:36px;"></div>
+    <button class="btn btn-primary" onclick="show('safety')">▶ Try It Now</button>
+    <div style="height:36px;"></div>
+  </div>
+</div>
+
+<!-- ═ RESPONSIBLE AI ══════════════════════════════ -->
+<div id="screen-responsible" class="screen">
+  <div class="rspwrap">
+    <h2>Safety & Responsible AI</h2>
+    <p class="sub">MOVA operates with clear, transparent boundaries. AI in health must know what it cannot do.</p>
+    <div class="prin-list">
+      <div class="prin"><h3>🔍 What MOVA Can Do</h3><p>Observe movement, calculate joint angles, detect movement phases, count reps and provide simple descriptive observations about what is detected in the current frame.</p></div>
+      <div class="prin"><h3>🚫 What MOVA Cannot Do</h3><p>MOVA cannot diagnose injuries, pain, medical conditions or structural limitations. It cannot replace a physiotherapist, doctor, personal trainer or any qualified health professional.</p></div>
+      <div class="prin"><h3>🟡 Uncertainty Handling</h3><p>When confidence drops below threshold, MOVA shows "I can't reliably assess this movement" instead of fabricating feedback. Uncertain data produces no analysis.</p></div>
+      <div class="prin"><h3>🌍 Individual Variation</h3><p>People have different anatomies, mobility, flexibility and histories. MOVA's feedback is broad and descriptive — not prescriptive. There is no single "correct" squat.</p></div>
+      <div class="prin"><h3>📷 Data Privacy</h3><p>All computer vision runs locally via WebAssembly. Camera feed never leaves your browser. Only session statistics (reps, duration, score) are stored in the database — no video, no images.</p></div>
+      <div class="prin"><h3>⚡ Explainability</h3><p>Every feedback message traces to a specific measurable value — a joint angle, a position ratio or a phase detection event. MOVA never produces unexplained verdicts.</p></div>
+    </div>
+    <button class="btn btn-outline" onclick="show('landing')">← Back to Home</button>
+    <div style="height:36px;"></div>
+  </div>
+</div>
+
+<!-- ═ AUTH MODALS ═════════════════════════════════ -->
+<!-- LOGIN -->
+<div class="modal-bg" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login')">×</button>
+    <h2>Welcome back</h2>
+    <p class="sub">Login to save your sessions and track progress.</p>
+    <div class="msg-bar" id="login-msg"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"/></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+    <div class="modal-footer">No account? <a onclick="closeModal('login');openModal('register')">Register here</a></div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="modal-bg" id="modal-register">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('register')">×</button>
+    <h2>Create Account</h2>
+    <p class="sub">Free account — stores all your sessions in the database.</p>
+    <div class="msg-bar" id="register-msg"></div>
+    <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your name"/></div>
+    <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="3–30 characters"/></div>
+    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"/></div>
+    <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+    <button class="btn btn-primary" style="width:100%" onclick="doRegister()">Create Account</button>
+    <div class="modal-footer">Already have an account? <a onclick="closeModal('register');openModal('login')">Login</a></div>
+  </div>
+</div>
+
+<!-- MediaPipe CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// API CLIENT
+// ═══════════════════════════════════════════════
+const API = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('mova_token');
+let ME    = null;
+
+async function api(path, opts = {}) {
+  const h = { 'Content-Type': 'application/json' };
+  if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+  const r = await fetch(API + path, { ...opts, headers: { ...h, ...opts.headers } });
+  const d = await r.json();
+  if (r.status === 401) { doLogout(); throw new Error('Session expired'); }
+  if (!r.ok) throw new Error(d.error || 'Request failed');
+  return d;
+}
+
+// ═══════════════════════════════════════════════
+// SCREEN ROUTING
+// ═══════════════════════════════════════════════
+const ALL_SCREENS = ['landing','safety','exercise','session','results','progress','profile','how','responsible'];
+function show(id) {
+  ALL_SCREENS.forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.toggle('active', s === id);
+  });
+  if (id === 'progress') loadProgress();
+  if (id === 'profile')  loadProfile();
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+function openModal(type) { document.getElementById('modal-' + type).classList.add('open'); }
+function closeModal(type) { document.getElementById('modal-' + type).classList.remove('open'); }
+
+function setMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'msg-bar ' + type; el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-password').value;
+  if (!email || !pw) { setMsg('login-msg','err','Email and password required'); return; }
+  try {
+    const d = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pw }) });
+    TOKEN = d.token; ME = d.user;
+    localStorage.setItem('mova_token', TOKEN);
+    closeModal('login');
+    updateNavAuth();
+    toast('Welcome back, ' + ME.username + '!', 'ok');
+  } catch(e) { setMsg('login-msg','err', e.message); }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const user = document.getElementById('reg-username').value.trim();
+  const email= document.getElementById('reg-email').value.trim();
+  const pw   = document.getElementById('reg-password').value;
+  if (!user || !email || !pw) { setMsg('register-msg','err','All fields except name are required'); return; }
+  try {
+    const d = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username: user, email, password: pw, full_name: name }) });
+    TOKEN = d.token; ME = d.user;
+    localStorage.setItem('mova_token', TOKEN);
+    closeModal('register');
+    updateNavAuth();
+    toast('Account created! Welcome, ' + ME.username, 'ok');
+  } catch(e) { setMsg('register-msg','err', e.message); }
+}
+
+function doLogout() {
+  TOKEN = null; ME = null;
+  localStorage.removeItem('mova_token');
+  updateNavAuth();
+  show('landing');
+  toast('Logged out', 'ok');
+}
+
+function updateNavAuth() {
+  const loggedIn = !!TOKEN;
+  document.getElementById('nav-login-btn').style.display    = loggedIn ? 'none' : '';
+  document.getElementById('nav-register-btn').style.display = loggedIn ? 'none' : '';
+  document.getElementById('nav-logout-btn').style.display   = loggedIn ? '' : 'none';
+  document.getElementById('nav-profile-btn').style.display  = loggedIn ? '' : 'none';
+  document.getElementById('nav-username').textContent       = ME ? ME.username : '';
+}
+
+// Close modals on backdrop click
+document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if (e.target === bg) bg.classList.remove('open'); }));
+
+// ═══════════════════════════════════════════════
+// EXERCISE SELECTION
+// ═══════════════════════════════════════════════
+let selectedEx = 'squat';
+function selectEx(name, el) {
+  if (el.classList.contains('locked')) return;
+  document.querySelectorAll('.exc').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedEx = name;
+}
+
+// ═══════════════════════════════════════════════
+// SESSION STATE
+// ═══════════════════════════════════════════════
+let sessionActive = false, sessionStart = null, sessionTimer = null;
+let repCount = 0, goodReps = 0;
+let sqPhase = 'standing', prevHipY = null, lowestHipY = Infinity, highestHipY = -Infinity;
+let noPersonFrames = 0;
+let formAccum = 0, formCount = 0, kneeAccum = 0, kneeCount = 0;
+let feedbackLog = [], repEvents = [];
+
+// MediaPipe
+let pose = null, cam = null, poseReady = false;
+
+function initPose() {
+  showLoad('Initialising AI Model…', 'Loading MediaPipe Pose — first load may take ~5s');
+  pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+  pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, enableSegmentation: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+  pose.onResults(onResults);
+  pose.initialize().then(() => {
+    poseReady = true;
+    hideLoad();
+    startCam();
+  }).catch(e => {
+    console.error('Pose init error:', e);
+    hideLoad();
+    showPermErr('AI model failed to load. Please check your internet connection and reload.');
+  });
+}
+
+function startCam() {
+  const video = document.getElementById('video');
+
+  // Check if browser supports getUserMedia
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showPermErr('Camera API not supported. Please use Chrome, Edge or Firefox on HTTPS or localhost.');
+    return;
+  }
+
+  // Request camera directly via getUserMedia — works on file://, localhost and HTTPS
+  navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+    audio: false
+  }).then(stream => {
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      video.play();
+      setDet('g', 'Camera Active');
+      const canvas = document.getElementById('canvas');
+      canvas.width  = video.videoWidth  || 1280;
+      canvas.height = video.videoHeight || 720;
+      // Kick off the pose send loop
+      camLoop();
+    };
+  }).catch(err => {
+    console.error('Camera error:', err);
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      showPermErr('Camera permission denied. Please click "Allow" when the browser asks for camera access, then reload.');
+    } else if (err.name === 'NotFoundError') {
+      showPermErr('No camera found on this device.');
+    } else {
+      showPermErr('Camera error: ' + err.message + '. Please reload and allow camera access.');
+    }
+  });
+}
+
+function camLoop() {
+  const video = document.getElementById('video');
+  async function frame() {
+    if (!sessionActive) return;
+    if (poseReady && video.readyState >= 2) {
+      try { await pose.send({ image: video }); } catch(e) { /* skip frame */ }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+async function startSession() {
+  // Reset
+  repCount=0; goodReps=0; sqPhase='standing'; prevHipY=null;
+  lowestHipY=Infinity; highestHipY=-Infinity; noPersonFrames=0;
+  formAccum=0; formCount=0; kneeAccum=0; kneeCount=0;
+  feedbackLog=[]; repEvents=[]; sessionStart=Date.now();
+
+  document.getElementById('rep-counter').textContent='0';
+  document.getElementById('sb-reps').textContent='0';
+  document.getElementById('sb-score').textContent='—';
+  document.getElementById('fbbar').textContent='Position yourself in front of the camera…';
+  document.getElementById('fbbar').className='fbbar';
+  document.getElementById('event-log').innerHTML='<div class="tli"><span>🎬</span><span>Session started</span></div>';
+  resetPhase(); setPhase('standing');
+
+  show('session');
+
+  const canvas = document.getElementById('canvas');
+  canvas.width = 1280; canvas.height = 720;
+
+  sessionActive = true;
+
+  if (!pose) { setTimeout(initPose, 80); }
+  else { startCam(); }
+
+  sessionTimer = setInterval(() => {
+    const s = Math.floor((Date.now()-sessionStart)/1000);
+    document.getElementById('sb-dur').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  }, 1000);
+}
+
+async function endSession() {
+  if (!sessionActive) return;
+  sessionActive = false;
+  clearInterval(sessionTimer);
+  logEv('⏹','Session ended');
+
+  const secs = Math.floor((Date.now()-sessionStart)/1000);
+  const dur  = Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  const score = formCount > 0 ? Math.round(formAccum/formCount) : 0;
+  const avgKnee = kneeCount > 0 ? Math.round(kneeAccum/kneeCount) : null;
+
+  showResults({ reps: repCount, goodReps, dur, score, avgKnee });
+  await persistSession({ reps: repCount, good_reps: goodReps, duration_sec: secs, form_score: score, avg_knee_ang: avgKnee, feedback_log: feedbackLog, rep_events: repEvents, started_at: new Date(sessionStart).toISOString() });
+}
+
+async function persistSession(data) {
+  const el = document.getElementById('save-status');
+  if (!TOKEN) { el.textContent = '⚠ Not logged in — session not saved to database. Login to keep your progress.'; return; }
+  try {
+    el.textContent = 'Saving to database…';
+    await api('/sessions', { method: 'POST', body: JSON.stringify({ exercise: selectedEx, ...data }) });
+    el.textContent = '✅ Session saved to database.';
+  } catch(e) {
+    el.textContent = '❌ Could not save session: ' + e.message;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// POSE RESULTS
+// ═══════════════════════════════════════════════
+function onResults(results) {
+  const canvas = document.getElementById('canvas');
+  const video  = document.getElementById('video');
+  const ctx    = canvas.getContext('2d');
+  if (canvas.width !== video.videoWidth && video.videoWidth > 0) { canvas.width = video.videoWidth; canvas.height = video.videoHeight; }
+  ctx.save();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+
+  if (!results.poseLandmarks?.length) {
+    noPersonFrames++;
+    if (noPersonFrames > 30) { document.getElementById('noperson').classList.add('show'); setDet('y','No person detected'); setConf('y','Confidence: Low'); }
+    ctx.restore(); return;
+  }
+  noPersonFrames = 0;
+  document.getElementById('noperson').classList.remove('show');
+
+  const lm = results.poseLandmarks;
+  const keyIdx = [11,12,23,24,25,26,27,28];
+  const avgConf = keyIdx.reduce((s,i) => s + (lm[i]?.visibility||0), 0) / keyIdx.length;
+
+  if (avgConf < 0.4) {
+    setDet('y','Person detected'); setConf('y','Confidence: Low ('+Math.round(avgConf*100)+'%)');
+    setFB('warn',"I can't reliably assess this movement. Please reposition yourself.");
+    drawSkelLow(ctx, lm, canvas.width, canvas.height);
+    ctx.restore(); return;
+  }
+
+  setDet('g','Person detected'); setConf('g','Confidence: '+Math.round(avgConf*100)+'%');
+  const an = analyzeSquat(lm, canvas.width, canvas.height);
+  drawSkel(ctx, lm, canvas.width, canvas.height, an);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════
+// SQUAT ANALYSIS
+// ═══════════════════════════════════════════════
+function analyzeSquat(lm) {
+  const lHip=lm[23],rHip=lm[24],lKnee=lm[25],rKnee=lm[26],lAnkle=lm[27],rAnkle=lm[28],lSh=lm[11],rSh=lm[12];
+  const lKA=ang3(lHip,lKnee,lAnkle), rKA=ang3(rHip,rKnee,rAnkle);
+  const lHA=ang3(lSh,lHip,lKnee),    rHA=ang3(rSh,rHip,rKnee);
+  const mSX=(lSh.x+rSh.x)/2, mSY=(lSh.y+rSh.y)/2, mHX=(lHip.x+rHip.x)/2, mHY=(lHip.y+rHip.y)/2;
+  const torso=Math.abs(Math.atan2(mSX-mHX, mHY-mSY)*180/Math.PI);
+  const lKO=Math.abs(lKnee.x-lAnkle.x), rKO=Math.abs(rKnee.x-rAnkle.x);
+  const avgKA=(lKA+rKA)/2;
+  if (lKA>0&&rKA>0) { kneeAccum+=avgKA; kneeCount++; }
+
+  // Phase detection
+  const hipY=mHY;
+  if (prevHipY===null) prevHipY=hipY;
+  const dY=hipY-prevHipY;
+
+  if (sqPhase==='standing') {
+    if (dY>0.005) { sqPhase='descend'; setPhase('descend'); lowestHipY=hipY; }
+  } else if (sqPhase==='descend') {
+    if (hipY>lowestHipY) lowestHipY=hipY;
+    if (dY<-0.005 && lowestHipY-hipY>0.10) { sqPhase='bottom'; setPhase('bottom'); logEv('↓','Bottom reached'); }
+    if (dY<-0.01 && lowestHipY-prevHipY<0.06) { sqPhase='standing'; setPhase('standing'); lowestHipY=Infinity; }
+  } else if (sqPhase==='bottom') {
+    if (dY<-0.005) { sqPhase='ascend'; setPhase('ascend'); highestHipY=hipY; }
+  } else if (sqPhase==='ascend') {
+    if (hipY<highestHipY) highestHipY=hipY;
+    if (lowestHipY-hipY>0.10 && avgKA>140) {
+      repCount++;
+      const rs=repScore(avgKA,torso,lKO,rKO);
+      if (rs>=60) goodReps++;
+      repEvents.push({ rep_number:repCount, knee_angle:Math.round(avgKA), hip_angle:Math.round((lHA+rHA)/2), torso_lean:Math.round(torso), rep_score:rs });
+      document.getElementById('rep-counter').textContent=repCount;
+      document.getElementById('sb-reps').textContent=repCount;
+      logEv('✅','Rep '+repCount+' — Score: '+rs+'/100');
+      sqPhase='standing'; setPhase('standing'); lowestHipY=Infinity; highestHipY=-Infinity;
+    }
+  }
+  prevHipY=hipY;
+
+  // Form scoring
+  const issues=[];
+  let fs=100;
+  if (lKO>0.07||rKO>0.07) { issues.push({j:'knees',m:'Knees may be tracking inward — try widening stance.'}); fs-=15; }
+  if (torso>35) { issues.push({j:'torso',m:'Torso is leaning forward — this may be a flexibility pattern.'}); fs-=10; }
+  if ((sqPhase==='bottom'||sqPhase==='descend')&&avgKA<100&&avgKA>60) issues.push({j:'depth',m:'✅ Good depth detected.'});
+  if (Math.abs(lKA-rKA)>20) { issues.push({j:'sym',m:'Left/right knee asymmetry detected — could be a natural pattern.'}); fs-=10; }
+  fs=Math.max(0,Math.min(100,fs));
+  formAccum+=fs; formCount++;
+
+  const ss=Math.round(formAccum/formCount);
+  const se=document.getElementById('sb-score');
+  se.textContent=ss; se.className='sv '+(ss>=75?'g':ss>=50?'y':'r');
+
+  // Feedback
+  if (issues.length===0) {
+    let m=sqPhase==='descend'?'↓ Good descent — chest up.':sqPhase==='bottom'?'✅ Solid bottom position.':sqPhase==='ascend'?'↑ Drive through your heels.':'Ready — begin your squat.';
+    setFB('good',m);
+  } else {
+    const i=issues[0];
+    setFB(i.m.startsWith('✅')?'good':'warn', i.m);
+    if (!i.m.startsWith('✅') && !feedbackLog.includes(i.m)) feedbackLog.push(i.m);
+  }
+
+  setAng('lk',lKA,60,180); setAng('rk',rKA,60,180);
+  setAng('lh',lHA,40,180); setAng('rh',rHA,40,180);
+  setAng('torso',torso,0,60);
+  return { lKA,rKA,lHA,rHA,torso,issues,lKO,rKO };
+}
+
+function repScore(avgKA,torso,lKO,rKO) {
+  let s=100;
+  if(avgKA>140) s-=20;
+  if(torso>35)  s-=10;
+  if(lKO>0.07||rKO>0.07) s-=15;
+  return Math.max(0,Math.min(100,s));
+}
+
+// ═══════════════════════════════════════════════
+// SKELETON DRAWING
+// ═══════════════════════════════════════════════
+const CONNS=[[0,1],[1,2],[2,3],[3,7],[0,4],[4,5],[5,6],[6,8],[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[28,30],[30,32]];
+const KEYJT=new Set([11,12,13,14,15,16,23,24,25,26,27,28,0]);
+
+function jColor(lm,i,an) {
+  if (!lm[i]||lm[i].visibility<0.3) return '#94a3b8';
+  if (lm[i].visibility<0.5) return '#eab308';
+  if (an?.issues) for (const x of an.issues) {
+    if (x.j==='knees'&&[25,26].includes(i)) return '#ef4444';
+    if (x.j==='torso'&&[11,12,23,24].includes(i)) return '#eab308';
+    if (x.j==='sym'&&[25,26].includes(i)) return '#eab308';
+  }
+  return '#22c55e';
+}
+
+function drawSkel(ctx,lm,w,h,an) {
+  ctx.save();
+  for (const [a,b] of CONNS) {
+    const p1=lm[a],p2=lm[b]; if (!p1||!p2||p1.visibility<0.2||p2.visibility<0.2) continue;
+    const g=ctx.createLinearGradient(p1.x*w,p1.y*h,p2.x*w,p2.y*h);
+    g.addColorStop(0,jColor(lm,a,an)+'cc'); g.addColorStop(1,jColor(lm,b,an)+'cc');
+    ctx.beginPath(); ctx.moveTo(p1.x*w,p1.y*h); ctx.lineTo(p2.x*w,p2.y*h);
+    ctx.strokeStyle=g; ctx.lineWidth=KEYJT.has(a)&&KEYJT.has(b)?3.5:2; ctx.lineCap='round'; ctx.stroke();
+  }
+  for (let i=0;i<lm.length;i++) {
+    const pt=lm[i]; if (!pt||pt.visibility<0.2) continue;
+    const col=jColor(lm,i,an), r=KEYJT.has(i)?7:4;
+    ctx.beginPath(); ctx.arc(pt.x*w,pt.y*h,r,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+    if (KEYJT.has(i)&&pt.visibility>0.6) { ctx.beginPath(); ctx.arc(pt.x*w,pt.y*h,r+4,0,Math.PI*2); ctx.strokeStyle=col+'44'; ctx.lineWidth=2; ctx.stroke(); }
+  }
+  ctx.restore();
+}
+
+function drawSkelLow(ctx,lm,w,h) {
+  for (const [a,b] of CONNS) {
+    const p1=lm[a],p2=lm[b]; if (!p1||!p2) continue;
+    ctx.beginPath(); ctx.moveTo(p1.x*w,p1.y*h); ctx.lineTo(p2.x*w,p2.y*h);
+    ctx.strokeStyle='#eab30877'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke();
+  }
+  for (let i=0;i<lm.length;i++) {
+    const pt=lm[i]; if (!pt) continue;
+    ctx.beginPath(); ctx.arc(pt.x*w,pt.y*h,KEYJT.has(i)?5:3,0,Math.PI*2); ctx.fillStyle='#eab308'; ctx.fill();
+  }
+}
+
+function ang3(A,B,C) {
+  if (!A||!B||!C) return 0;
+  const ax=A.x-B.x,ay=A.y-B.y,cx=C.x-B.x,cy=C.y-B.y;
+  const d=ax*cx+ay*cy, m=Math.sqrt((ax*ax+ay*ay)*(cx*cx+cy*cy));
+  return m===0?0:Math.acos(Math.min(1,Math.max(-1,d/m)))*180/Math.PI;
+}
+
+// ═══════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════
+function setDet(c,t) { document.getElementById('det-dot').className='sdot '+c; document.getElementById('det-txt').textContent=t; }
+function setConf(c,t) { document.getElementById('conf-dot').className='sdot '+c; document.getElementById('conf-txt').textContent=t; }
+function setFB(type,msg) { const b=document.getElementById('fbbar'); b.textContent=msg; b.className='fbbar'+(type?' '+type:''); }
+function setPhase(p) { ['standing','descend','bottom','ascend'].forEach(x=>{ const e=document.getElementById('ph-'+x); if(e) e.classList.toggle('active',x===p); }); }
+function resetPhase() { ['standing','descend','bottom','ascend'].forEach(x=>{ const e=document.getElementById('ph-'+x); if(e) e.classList.remove('active'); }); }
+function setAng(id,val,mn,mx) {
+  const ae=document.getElementById('ang-'+id), be=document.getElementById('bar-'+id);
+  if (!ae||!be) return;
+  ae.textContent=Math.round(val)+'°';
+  be.style.width=Math.min(100,Math.max(0,((val-mn)/(mx-mn))*100))+'%';
+  be.className='abfill '+(id==='torso'?(val<25?'g':val<40?'y':'r'):(val<160&&val>60?'g':'y'));
+}
+function logEv(icon,msg) {
+  const log=document.getElementById('event-log');
+  const d=document.createElement('div'); d.className='tli'; d.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
+  log.insertBefore(d,log.firstChild);
+  while(log.children.length>20) log.removeChild(log.lastChild);
+}
+function showPermErr(msg) { const e=document.getElementById('permerr'); e.style.display='flex'; if(msg) e.querySelector('p').textContent=msg; }
+function showLoad(m,s) { document.getElementById('loverlay').classList.remove('hide'); document.getElementById('lmsg').textContent=m||''; document.getElementById('lsub').textContent=s||''; }
+function hideLoad() { document.getElementById('loverlay').classList.add('hide'); }
+function toast(msg,type='ok') {
+  const t=document.getElementById('toast'); t.textContent=msg; t.className='toast show '+(type||'');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ═══════════════════════════════════════════════
+// RESULTS
+// ═══════════════════════════════════════════════
+function showResults(d) {
+  show('results');
+  document.getElementById('res-reps').textContent=d.reps;
+  document.getElementById('res-dur').textContent=d.dur;
+  document.getElementById('res-good').textContent=d.goodReps;
+  document.getElementById('res-knee').textContent=d.avgKnee!==null?d.avgKnee+'°':'—°';
+  const ring=document.getElementById('score-ring'), num=document.getElementById('score-num');
+  num.textContent=d.score;
+  setTimeout(()=>{ ring.style.strokeDashoffset=276-(d.score/100)*276; },200);
+  ring.style.stroke=d.score>=75?'#22c55e':d.score>=50?'#eab308':'#ef4444';
+  const fb=document.getElementById('res-fblist');
+  fb.innerHTML='';
+  if (d.reps===0) { fb.innerHTML='<div class="fbi">⚠️ No complete reps detected.</div>'; }
+  else {
+    fb.innerHTML+=`<div class="fbi">✅ <strong>${d.reps} squat${d.reps!==1?'s':''}</strong> completed in ${d.dur}.</div>`;
+    fb.innerHTML+=`<div class="fbi">✅ ${d.goodReps} rep${d.goodReps!==1?'s':''} met good-form criteria.</div>`;
+    if (d.avgKnee) fb.innerHTML+=`<div class="fbi">📐 Avg knee angle: ${d.avgKnee}°${d.avgKnee<100?' — solid depth.':d.avgKnee<130?' — moderate depth.':' — consider deeper if comfortable.'}</div>`;
+    feedbackLog.slice(0,4).forEach(f=>{ fb.innerHTML+=`<div class="fbi">💬 ${f}</div>`; });
+  }
+  fb.innerHTML+=`<div class="fbi" style="font-size:.75rem;font-style:italic;margin-top:10px;">MOVA provides movement observation only — not medical advice.</div>`;
+  document.getElementById('save-status').textContent='';
+}
+
+// ═══════════════════════════════════════════════
+// PROGRESS (API or local fallback)
+// ═══════════════════════════════════════════════
+async function loadProgress() {
+  const lp=document.getElementById('pg-login-prompt');
+  if (!TOKEN) { lp.style.display='block'; loadLocalProgress(); return; }
+  lp.style.display='none';
+  try {
+    const s=await api('/sessions/stats');
+    document.getElementById('pg-sessions').textContent=s.total_sessions;
+    document.getElementById('pg-reps').textContent=s.total_reps;
+    document.getElementById('pg-avg').textContent=s.avg_score||'—';
+    document.getElementById('pg-best').textContent=s.best_score||'—';
+    document.getElementById('pg-mins').textContent=s.total_minutes;
+    if (s.total_sessions===0) { document.getElementById('pg-empty').style.display='block'; document.getElementById('pg-table').style.display='none'; return; }
+    document.getElementById('pg-empty').style.display='none';
+    document.getElementById('pg-table').style.display='table';
+    const sessions=await api('/sessions?limit=50');
+    const tbody=document.getElementById('pg-tbody'); tbody.innerHTML='';
+    sessions.sessions.forEach(s=>{
+      const cls=s.form_score>=75?'g':s.form_score>=50?'y':'r';
+      const dur=Math.floor(s.duration_sec/60)+':'+String(s.duration_sec%60).padStart(2,'0');
+      tbody.innerHTML+=`<tr><td>${new Date(s.started_at).toLocaleDateString()}</td><td>${s.exercise}</td><td>${s.reps}</td><td>${dur}</td><td><span class="sb2 ${cls}">${Math.round(s.form_score)}/100</span></td></tr>`;
+    });
+  } catch(e) { console.error(e); loadLocalProgress(); }
+}
+
+function loadLocalProgress() {
+  const sessions=JSON.parse(localStorage.getItem('mova_sessions_local')||'[]');
+  document.getElementById('pg-sessions').textContent=sessions.length;
+  document.getElementById('pg-reps').textContent=sessions.reduce((a,s)=>a+s.reps,0);
+  const scores=sessions.map(s=>s.score).filter(s=>s>0);
+  document.getElementById('pg-avg').textContent=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):'—';
+  document.getElementById('pg-best').textContent=scores.length?Math.max(...scores):'—';
+  document.getElementById('pg-mins').textContent=Math.round(sessions.reduce((a,s)=>a+(s.duration_sec||0),0)/60);
+  if (!sessions.length) { document.getElementById('pg-empty').style.display='block'; document.getElementById('pg-table').style.display='none'; return; }
+  document.getElementById('pg-empty').style.display='none';
+  document.getElementById('pg-table').style.display='table';
+  const tbody=document.getElementById('pg-tbody'); tbody.innerHTML='';
+  sessions.forEach(s=>{
+    const cls=s.score>=75?'g':s.score>=50?'y':'r';
+    const dur=Math.floor((s.duration_sec||0)/60)+':'+String((s.duration_sec||0)%60).padStart(2,'0');
+    tbody.innerHTML+=`<tr><td>${s.date}</td><td>${s.exercise}</td><td>${s.reps}</td><td>${dur}</td><td><span class="sb2 ${cls}">${s.score}/100</span></td></tr>`;
+  });
+}
+
+// Also save locally as fallback
+const _origPersist = window.persistSession;
+async function persistSession(data) {
+  const local=JSON.parse(localStorage.getItem('mova_sessions_local')||'[]');
+  local.unshift({ date:new Date().toLocaleDateString(), exercise:selectedEx, reps:data.reps, score:data.form_score, duration_sec:data.duration_sec, ts:Date.now() });
+  if (local.length>50) local.length=50;
+  localStorage.setItem('mova_sessions_local',JSON.stringify(local));
+  const el=document.getElementById('save-status');
+  if (!TOKEN) { el.textContent='⚠ Not logged in — saved locally only. Register to keep cross-device history.'; return; }
+  try {
+    el.textContent='Saving to database…';
+    await api('/sessions',{method:'POST',body:JSON.stringify({exercise:selectedEx,...data})});
+    el.textContent='✅ Session saved to database.';
+  } catch(e) { el.textContent='❌ DB save failed: '+e.message+' (saved locally).'; }
+}
+
+// ═══════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════
+async function loadProfile() {
+  if (!TOKEN) { show('landing'); openModal('login'); return; }
+  try {
+    const u=await api('/users/profile');
+    document.getElementById('prof-username').textContent=u.user.username;
+    document.getElementById('prof-email').textContent=u.user.email;
+    document.getElementById('prof-since').textContent=new Date(u.user.created_at).toLocaleDateString();
+    document.getElementById('prof-sessions').textContent=u.user.session_count||0;
+    document.getElementById('prof-name').value=u.user.full_name||'';
+    document.getElementById('prof-age').value=u.user.age||'';
+    document.getElementById('prof-fitness').value=u.user.fitness_level||'beginner';
+  } catch(e) { console.error(e); }
+}
+
+async function saveProfile() {
+  try {
+    await api('/users/profile',{method:'PUT',body:JSON.stringify({ full_name:document.getElementById('prof-name').value, age:parseInt(document.getElementById('prof-age').value)||undefined, fitness_level:document.getElementById('prof-fitness').value })});
+    toast('Profile updated','ok');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+async function changePassword() {
+  const cur=document.getElementById('pw-cur').value, nw=document.getElementById('pw-new').value;
+  if (!cur||!nw) { toast('Fill in both fields','err'); return; }
+  try {
+    await api('/users/password',{method:'PUT',body:JSON.stringify({current_password:cur,new_password:nw})});
+    document.getElementById('pw-cur').value=''; document.getElementById('pw-new').value='';
+    toast('Password changed','ok');
+  } catch(e) { toast(e.message,'err'); }
+}
+
+function logout() { doLogout(); }
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+(async function init() {
+  if (TOKEN) {
+    try { const d=await api('/auth/me'); ME=d.user; } catch(e) { TOKEN=null; localStorage.removeItem('mova_token'); }
+  }
+  updateNavAuth();
+})();
+</script>
+</body>
+</html>
