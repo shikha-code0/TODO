@@ -29,7 +29,7 @@
    Central place for all API URLs and auth helpers
    ============================================================= */
 
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "https://todo-production-cf58.up.railway.app/api";
 
 // Get stored token and email from localStorage
 function getToken()  { return localStorage.getItem("token"); }
