@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/passwords")
-@CrossOrigin(origins = "*")
 public class PasswordVaultController {
 
     @Autowired

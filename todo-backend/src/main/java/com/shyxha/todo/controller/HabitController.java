@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/habits")
-@CrossOrigin(origins = "*")
 public class HabitController {
 
     @Autowired
