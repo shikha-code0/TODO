@@ -29,7 +29,18 @@
    Central place for all API URLs and auth helpers
    ============================================================= */
 
-const API_BASE = "http://localhost:8080/api";
+// Railway backend URL (update PROD_API if Railway generates a new backend domain)
+const PROD_API = "https://todo-production-de49.up.railway.app/api";
+const LOCAL_API = "http://localhost:8080/api";
+
+// Use the local backend when the page is opened from localhost/file,
+// otherwise use the deployed Railway backend
+const IS_LOCAL =
+    window.location.protocol === "file:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+const API_BASE = IS_LOCAL ? LOCAL_API : PROD_API;
 
 // Get stored token and email from localStorage
 function getToken()  { return localStorage.getItem("token"); }
